@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style type="text/css">
+img { 
+	display:inline-block;
+  max-width:100%;
+  max-height:100%;
+  pointer-events: none;
+
+}
+
+.grid  {
+  margin: 0 auto 250px;
+}
+
+.search  {
+  margin: 0 auto 10px;
+  width: 100%;
+}
+
+.facets {
+	flex: 250px;
+}
+
+.content {
+	display: flex;
+}
+
+.images {
+	flex: 100%;
+}
+
+
+.grid-item { 
+	display:inline-block;
+	width: 400px;
+	margin-bottom: 2px;
+	margin-top: 0;
+	}
+
+
+.grid-item--gigante { 
+	display:inline-block;
+	width: 805px;
+	margin-bottom: 2px;
+	margin-top: 0;
+  z-index: 2; /* above other items */
+	}
+	
+.grid-item--gigante1 {
+  width: 320px;
+  height: 360px;
+  background: #F90;
+  z-index: 2; /* above other items */
+}
+	
+	
+.grid-item--width2 { width: 200px; }
+
+	</style>
+	<script src="https://unpkg.com/masonry-layout@4/dist/masonry.pkgd.min.js"></script>
+	<script src="https://unpkg.com/imagesloaded@4/imagesloaded.pkgd.min.js"></script>
+  </head>
+  <body>
+
+	<form id="search">
+		<input class="search" type="search" name="q" value="{{ q or '' }}">
+		
+	<div class="content">
+	  <div  class="facets">
+		<h1>Всего: {{total_count}}</h1>
+		<h1>Люди:</h1>
+		{% for person in persons %}
+		<input type="checkbox" id="{{person[0]}}" name="person" value="{{person[0]}}" {% if person[2] %}checked {%endif %}onchange="document.getElementById('search').submit()">
+		<label for="{{person[0]}}">{{person[0]}} ({{person[1]}})</label><br/>
+		{% endfor %}
+		<h1>Число:</h1>
+		{% for count in counts %}
+		<input type="checkbox" id="{{count[0]}}" name="count" value="{{count[0]}}" {% if count[2] %}checked {%endif %}onchange="document.getElementById('search').submit()">
+		<label for="{{count[0]}}">{{count[0]}} ({{count[1]}})</label><br/>
+		{% endfor %}
+	  </div>
+	  <div class="images">
+		<div class="grid"> <!--data-masonry='{ "itemSelector": ".grid-item", "columnWidth": 400, "gutter": 5, "fitWidth": true}'-->
+			{% for image in images %}
+			<div class="grid-item"><img src="{{image | safe}}" /></div>
+			{% endfor %}
+		</div>
+	  </div>
+	</div>
+	
+	</form>
+	
+    <script>
+var grid = document.querySelector('.grid');
+var msnry = new Masonry( grid, {
+  columnWidth: 400,
+  gutter: 5,
+  fitWidth: true,
+  itemSelector: '.grid-item'
+});
+
+grid.addEventListener( 'click', function( event ) {
+  if ( !matchesSelector( event.target, '.grid-item' ) ) {
+    return;
+  }
+  event.target.classList.toggle('grid-item--gigante');
+  msnry.layout();
+});
+
+msnry.on( 'layoutComplete', function( laidOutItems ) {
+  console.log( 'Masonry layout complete with ' + laidOutItems.length + ' items' );
+});
+
+imagesLoaded( grid ).on( 'progress', function() {
+  msnry.layout();
+});
+    </script>	
+	
+  </body>
+</html>
