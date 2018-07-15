@@ -1,31 +1,10 @@
 import os
-from elasticsearch import Elasticsearch
 from flask import Flask, render_template, request
 from elastic import PhotoSearch, Cluster
 from elasticsearch_dsl import connections, Search, A
 from argparse import ArgumentParser
 
 app = Flask(__name__, static_url_path='')
-
-
-def update_cluster(cluster):
-    q = {
-        "script": {
-            "inline": "ctx._source.person=params.person",
-            "lang": "painless",
-            "params": {
-                "person": cluster.person
-            }
-        },
-        "query": {
-            "terms": {
-                "_id": cluster.faces
-            }
-        }
-    }
-    es = Elasticsearch()
-    es.update_by_query(body=q, doc_type='doc', index='faces', conflicts='proceed')
-
 
 @app.errorhandler(500)
 def internal_server_error(e):
@@ -38,7 +17,7 @@ def display_clusters():
         cluster = Cluster.get(id=request.values.get('cluster_id'))
         cluster.person = request.values.get('person')
         cluster.save(refresh=True)
-        update_cluster(cluster)
+        cluster.update_faces_index()
 
     a = A("terms", field="person.raw", size=10000)
     ps = Search()
