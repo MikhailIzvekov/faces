@@ -1,22 +1,30 @@
 import os
 import base64
 import numpy as np
-from clustering import cluster
+from elasticsearch.helpers import bulk
+from clustering.clustering import cluster
 from jinja2 import Template
-from elastic import Face, Photo
+from elastic import Face, Photo, Cluster
 from elasticsearch import Elasticsearch, exceptions
 from elasticsearch_dsl import connections
 from collections import defaultdict
 from argparse import ArgumentParser
 
 
-def approximate_rank_order_clustering(vectors):
+def approximate_rank_order_clustering(faces):
+    vectors = np.array([np.frombuffer(base64.b64decode(o.features.encode()), dtype=np.float64) for o in faces])
     clusters = cluster(vectors, n_neighbors=200, thresh=[0.65])
-    return clusters
+    clusters_id = [[faces[e].meta.id for e in q] for q in clusters[0]['clusters']]
+    return clusters_id
+
+
+def generate_clusters_index(clusters):
+    Cluster._index.delete(ignore=404)
+    Cluster.init()
+    bulk(Elasticsearch(), (Cluster(c).to_dict(True) for c in clusters))
 
 
 def generate_images_index():
-    connections.create_connection(hosts=[args.elastic])
     Photo.init()
     results = Face.search().filter("exists", field="person").scan()
 
@@ -64,32 +72,18 @@ def do_clusters(features, ids, names):
                 update_cluster(cluster, ids, names[index])
 
 
-def load_faces_data():
-    connections.create_connection(hosts=['localhost'])
-    results = Face.search().scan()
-    ids = []
-    features = []
-    names = []
-    for face in results:
-        ids.append(face._id)
-        features.append(np.frombuffer(base64.b64decode(face.features.encode()), dtype=np.float64))
-        names.append(face.person)
-    senc = np.array(features)
-    return senc, ids, names
-
-
-def render_clusters_to_html(features, ids):
-    template_filename = r".\templates\clusters.html"
+def render_clusters_to_html(faces):
+    template_filename = r".\templates\clusters_local.html"
     output_filename = r"result.html"
 
-    clst = approximate_rank_order_clustering(features)
+    clst = approximate_rank_order_clustering(faces)
 
     with open(template_filename, 'r') as template_file:
         template = Template(template_file.read())
 
-    clusters = [x for x in clst[0]['clusters'] if len(x) > 3]
+    clusters = [x for x in clst if len(x) > 3]
     clusters.sort(key=len, reverse=True)
-    html = template.render(clusters=clusters, labels=ids)
+    html = template.render(clusters=clusters)
 
     with open(output_filename, 'w') as file:
         file.write(html)
@@ -101,8 +95,13 @@ if __name__ == '__main__':
     parser.add_argument("-es", "--elastic", dest="elastic",
                         help="Elasticsearch address, default is localhost", metavar="ADDRESS", default='localhost')
     args = parser.parse_args()
+    connections.create_connection(hosts=[args.elastic])
 
-    # features, ids, names = load_faces_data()
-    # render_clusters_to_html(features, ids)
+    # faces = [face for face in Face.search().scan()]
+    # render_clusters_to_html(faces[0:300])
+
+    # clst = approximate_rank_order_clustering(faces[0:300])
+    # generate_clusters_index(clst)
+
     # do_clusters(features, ids, names)
     # generate_images_index()

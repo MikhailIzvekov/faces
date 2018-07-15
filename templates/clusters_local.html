@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style type="text/css">
+	img {
+		max-width:100px; }
+	</style>
+  </head>
+  <body>
+    {% for cluster in clusters %}
+    <div> 
+	<hr/>
+	    {% for image_id in cluster %}
+		  <img src="d:\Agr's Place\Python\faces\img\extracted_very_big\{{image_id}}.jpg">
+		{% endfor %}
+	</div>
+    {% endfor %}
+  </body>
+</html>

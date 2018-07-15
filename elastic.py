@@ -1,4 +1,4 @@
-from elasticsearch_dsl import DocType, Integer, Text, Field, Object, Keyword, \
+from elasticsearch_dsl import DocType, InnerDoc, Integer, Text, Field, Object, Keyword, \
     analyzer, tokenizer, FacetedSearch, TermsFacet
 
 path_tokenizer = tokenizer('path_tokenizer', type='path_hierarchy', delimiter='\\')
@@ -9,7 +9,7 @@ class Binary(Field):
     name = 'binary'
 
 
-class Position(DocType):
+class Position(InnerDoc):
     top = Integer()
     left = Integer()
     bottom = Integer()
@@ -26,8 +26,8 @@ class Face(DocType):
         fields={'raw': Keyword()}
     )
 
-    class Meta:
-        index = 'faces'
+    class Index:
+        name = 'faces'
 
 
 class Photo(DocType):
@@ -39,8 +39,23 @@ class Photo(DocType):
 
     person_count = Integer()
 
-    class Meta:
-        index = 'photos'
+    class Index:
+        name = 'photos'
+
+
+class Cluster(DocType):
+    faces = Keyword()
+    face_count = Integer()
+    person = Keyword()
+
+    class Index:
+        name = 'clusters'
+
+    def __init__(self, faces=None, meta=None):
+        super(Cluster, self).__init__(meta)
+        if faces:
+            self.faces = faces
+            self.face_count = len(faces)
 
 
 class PhotoSearch(FacetedSearch):

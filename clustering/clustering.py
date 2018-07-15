@@ -6,7 +6,6 @@
 import pyflann
 import numpy as np
 from time import time
-from profilehooks import profile
 from multiprocessing import Pool
 from functools import partial
 import json
