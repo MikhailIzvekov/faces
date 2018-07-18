@@ -76,8 +76,25 @@ class Cluster(DocType):
                 }
             },
             "query": {
-                "terms": {
-                    "_id": self.faces
+                "bool": {
+                    "must": [
+                        {
+                            "terms": {
+                                "_id": self.faces
+                            }
+                        },
+                        {
+                            "bool": {
+                                "must_not": [
+                                    {
+                                        "exists": {
+                                            "field": "person"
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
                 }
             }
         }

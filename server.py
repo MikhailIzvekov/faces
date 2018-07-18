@@ -1,6 +1,6 @@
 import os
 from flask import Flask, render_template, request
-from elastic import PhotoSearch, Cluster
+from elastic import PhotoSearch, Cluster, Face
 from elasticsearch_dsl import connections, Search, A
 from argparse import ArgumentParser
 
@@ -15,9 +15,23 @@ def internal_server_error(e):
 def display_clusters():
     if request.method == "POST":
         cluster = Cluster.get(id=request.values.get('cluster_id'))
-        cluster.person = request.values.get('person')
+
+        action = request.values.get('action')
+        if action == "Save":
+            cluster.person = request.values.get('person')
+
+        if action == "Ignore":
+            cluster.person = "ignored, cluster_id: " + cluster.meta.id
+
         cluster.save(refresh=True)
         cluster.update_faces_index()
+
+    Face._index.refresh()
+
+    total = Face.search().count()
+    named = Face.search().filter("exists", field="person").count()
+    status = "{:.1%} ({} out of {}) faces are named. Clusters count: {}".format(named / total, named, total,
+                                                                              Cluster.search().count())
 
     a = A("terms", field="person.raw", size=10000)
     ps = Search()
@@ -27,9 +41,9 @@ def display_clusters():
     persons = [b.key for b in psr.aggs['persons']]
 
     s = Cluster.search().exclude("exists", field="person").sort("-face_count")
-    results = s[0:100].execute()
+    results = s[0:50].execute()
 
-    return render_template('clusters.html', clusters=results, persons=persons)
+    return render_template('clusters.html', clusters=results, persons=persons, status=status)
 
 
 @app.route('/', methods=["GET", "POST"])
@@ -59,4 +73,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     connections.create_connection(hosts=[args.elastic])
-    app.run(debug=False)
+    app.run(debug=False, host='0.0.0.0')

@@ -5,6 +5,8 @@ import pika
 import sys
 import base64
 import face_recognition
+from pika import PlainCredentials
+
 from elastic import Face
 from elasticsearch_dsl import connections
 from PIL import Image
@@ -18,6 +20,10 @@ if __name__ == '__main__':
                         help="RabbitMQ host, default is localhost", metavar="HOST", default='localhost')
     parser.add_argument("-f", "--folder", dest="folder",
                         help="Folder for extracted faces, no extraction if unspecified", metavar="FOLDER")
+    parser.add_argument("-u", "--user", dest="user",
+                        help="RabbitMQ user name", metavar="USER", default='guest')
+    parser.add_argument("-p", "--password", dest="password",
+                        help="RabbitMQ user password", metavar="PASSWORD", default='guest')
 
     args = parser.parse_args()
 
@@ -26,7 +32,8 @@ if __name__ == '__main__':
 
     print(' [*] Waiting for messages. To exit press CTRL+BREAK')
 
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host=args.host))
+    credentials = PlainCredentials(args.user, args.password)
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host=args.host, credentials=credentials))
     channel = connection.channel()
     channel.queue_declare(queue='img_queue', durable=True)
 
@@ -51,7 +58,7 @@ if __name__ == '__main__':
                 if args.folder:
                     face_image = image[location[0]:location[2], location[3]:location[1]]
                     pil_image = Image.fromarray(face_image)
-                    pil_image.save(join(args.folder, face._id + '.jpg'))
+                    pil_image.save(join(args.folder, face.meta.id + '.jpg'))
 
             ch.basic_ack(delivery_tag=method.delivery_tag)
         except:
