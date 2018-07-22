@@ -55,6 +55,7 @@ def display_clusters():
 def display_main():
     q = request.values.get('q')
     pc = {"persons": request.values.getlist("person"),
+          "tags": request.values.getlist("tag"),
           "person_count": [int(x) for x in request.values.getlist("count")]}
 
     s = PhotoSearch(query=q, filters=pc)
@@ -66,9 +67,10 @@ def display_main():
         images.append(os.path.splitdrive(photo.file_name)[1])
     persons = results.facets.persons
     counts = results.facets.person_count
+    tags = results.facets.tags
 
     return render_template('main.html', images=images, q=q,
-                           persons=persons, counts=counts, total_count=results.hits.total)
+                           persons=persons, counts=counts, tags=tags, total_count=results.hits.total)
 
 
 if __name__ == "__main__":

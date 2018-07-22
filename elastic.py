@@ -31,7 +31,10 @@ class Face(DocType):
 
 
 class Photo(DocType):
-    file_name = Text(fields={'raw': Keyword()})
+    file_name = Text(
+        fielddata=True,
+        fields={'raw': Keyword()}
+    )
 
     persons = Text(
         fields={'raw': Keyword()}
@@ -108,8 +111,27 @@ class PhotoSearch(FacetedSearch):
     fields = ['persons', 'file_name']
 
     facets = {
-        'persons': TermsFacet(field='persons.raw', size=200),
-        'person_count': TermsFacet(field='person_count', size=200)
+        'persons': TermsFacet(field='persons.raw', size=100),
+        'person_count': TermsFacet(field='person_count', size=20),
+        'tags': TermsFacet(field="file_name", size=50, exclude=[
+          "agr's",
+          "place",
+          "d",
+          "мои",
+          "рисунки",
+          "фотографии",
+          "jpg",
+          "raw",
+          "и",
+          "с",
+          "c",
+          "у",
+          "для",
+          "по",
+          "из",
+          "на",
+          "в"
+        ])
     }
 
     def query(self, search, query):

@@ -75,6 +75,11 @@ img {
 		<input type="checkbox" id="{{person[0]}}" name="person" value="{{person[0]}}" {% if person[2] %}checked {%endif %}onchange="document.getElementById('search').submit()">
 		<label for="{{person[0]}}">{{person[0]}} ({{person[1]}})</label><br/>
 		{% endfor %}
+		<h1>Тэги?:</h1>
+		{% for tag in tags %}
+		<input type="checkbox" id="{{tag[0]}}" name="tag" value="{{tag[0]}}" {% if tag[2] %}checked {%endif %}onchange="document.getElementById('search').submit()">
+		<label for="{{tag[0]}}">{{tag[0]}} ({{tag[1]}})</label><br/>
+		{% endfor %}
 		<h1>Число:</h1>
 		{% for count in counts %}
 		<input type="checkbox" id="{{count[0]}}" name="count" value="{{count[0]}}" {% if count[2] %}checked {%endif %}onchange="document.getElementById('search').submit()">
