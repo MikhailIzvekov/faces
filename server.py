@@ -1,7 +1,8 @@
 import os
-from flask import Flask, render_template, request
+from elasticsearch_dsl.query import FunctionScore
+from flask import Flask, render_template, request, Response
 from elastic import PhotoSearch, Cluster, Face
-from elasticsearch_dsl import connections, Search, A
+from elasticsearch_dsl import connections, Search, A, Q, SF
 from argparse import ArgumentParser
 
 app = Flask(__name__, static_url_path='')
@@ -40,7 +41,11 @@ def display_clusters():
 
     persons = [b.key for b in psr.aggs['persons']]
 
-    s = Cluster.search().exclude("exists", field="person").sort("-face_count")
+    s = Cluster.search().exclude("exists", field="person")
+    s.query = FunctionScore(query=s.query, functions=[SF('random_score', weight=100),
+                                                      SF('field_value_factor', field="face_count", weight=1)],
+                            score_mode="avg", boost_mode="replace")
+
     results = s[0:50].execute()
 
     return render_template('clusters.html', clusters=results, persons=persons, status=status)
