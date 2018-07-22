@@ -5,26 +5,6 @@ import pika
 from pika import PlainCredentials
 
 
-def queue_file(filename, host='localhost', user='guest', password='guest'):
-    """
-    Add file to queue.
-    """
-    credentials = PlainCredentials(user, password)
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host=host, credentials=credentials))
-    channel = connection.channel()
-
-    channel.queue_declare(queue='img_queue', durable=True)
-
-    channel.basic_publish(exchange='',
-                          routing_key='img_queue',
-                          body=filename,
-                          properties=pika.BasicProperties(
-                              delivery_mode=2,  # make message persistent
-                              headers={'named': args.named}
-                          ))
-    connection.close()
-
-
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument("-f", "--folder", dest="folder",
@@ -42,7 +22,21 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     if args.folder:
+
+        credentials = PlainCredentials(args.user, args.password)
+        connection = pika.BlockingConnection(pika.ConnectionParameters(host=args.host, credentials=credentials))
+        channel = connection.channel()
+
+        channel.queue_declare(queue='img_queue', durable=True)
+
         for dirpath, dirs, files in os.walk(args.folder):
             for f in files:
                 if f.lower().endswith(('.jpg', '.jpeg')):
-                    queue_file(join(dirpath, f), args.host, args.user, args.password)
+                    channel.basic_publish(exchange='',
+                                          routing_key='img_queue',
+                                          body=join(dirpath, f),
+                                          properties=pika.BasicProperties(
+                                              delivery_mode=2,  # make message persistent
+                                              headers={'named': args.named}
+                                          ))
+        connection.close()
