@@ -89,7 +89,7 @@ img {
 	  <div class="images">
 		<div class="grid"> <!--data-masonry='{ "itemSelector": ".grid-item", "columnWidth": 400, "gutter": 5, "fitWidth": true}'-->
 			{% for image in images %}
-			<div class="grid-item"><img src="{{image | safe}}" /></div>
+			<div class="grid-item"><img src="/thumbnails/{{image | safe}}" /></div>
 			{% endfor %}
 		</div>
 	  </div>
