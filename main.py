@@ -31,7 +31,7 @@ def generate_clusters_index(clusters):
 def generate_images_index():
     Photo._index.delete(ignore=404)
     Photo.init()
-    results = Face.search().filter("exists", field="person").scan()
+    results = Face.search().filter("exists", field="person").exclude('terms', person=['ignored']).scan()
 
     groups = defaultdict(list)
 
