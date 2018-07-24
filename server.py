@@ -1,9 +1,12 @@
+# -*- coding: utf-8 -*-
 import os
+
 from elasticsearch_dsl.query import FunctionScore
 from flask import Flask, render_template, request, Response
 from elastic import PhotoSearch, Cluster, Face
 from elasticsearch_dsl import connections, Search, A, Q, SF
 from argparse import ArgumentParser
+import json
 
 app = Flask(__name__, static_url_path='')
 
@@ -12,27 +15,20 @@ def internal_server_error(e):
     return str(e), 500
 
 
-@app.route('/clusters', methods=["GET", "POST"])
-def display_clusters():
-    if request.method == "POST":
-        cluster = Cluster.get(id=request.values.get('cluster_id'))
-
-        action = request.values.get('action')
-        if action == "Save":
-            cluster.person = request.values.get('person')
-
-        if action == "Ignore":
-            cluster.person = "ignored, cluster_id: " + cluster.meta.id
-
-        cluster.save(refresh=True)
-        cluster.update_faces_index()
-
+@app.route('/clusters', methods=['GET', ])
+def test_clusters():
+    """
+    Отображает AJAX-версию страницы с кластеризацией. Предназначено для замены
+    display_clusters() после тестирования.
+    """
+    person = request.values.get('filter')
+    print(person)
     Face._index.refresh()
 
     total = Face.search().count()
     named = Face.search().filter("exists", field="person").count()
-    status = "{:.1%} ({} out of {}) faces are named. Clusters count: {}".format(named / total, named, total,
-                                                                              Cluster.search().count())
+    status = "{:.1%} ({} out of {}) faces are named. Clusters count: {}".format(
+        named / total, named, total, Cluster.search().count())
 
     a = A("terms", field="person.raw", size=10000)
     ps = Search()
@@ -41,14 +37,48 @@ def display_clusters():
 
     persons = [b.key for b in psr.aggs['persons']]
 
-    s = Cluster.search().exclude("exists", field="person")
-    s.query = FunctionScore(query=s.query, functions=[SF('random_score', weight=100),
-                                                      SF('field_value_factor', field="face_count", weight=1)],
-                            score_mode="avg", boost_mode="replace")
+        s = Cluster.search().exclude("exists", field="person")
+        s.query = FunctionScore(query=s.query, functions=[SF('random_score', weight=100),
+                                                          SF('field_value_factor', field="face_count", weight=1)],
+                                score_mode="avg", boost_mode="replace")
+        results = s[0:50].execute()
 
-    results = s[0:50].execute()
+    return render_template('clusters.html', clusters=results,
+                           persons=persons, status=status)
 
-    return render_template('clusters.html', clusters=results, persons=persons, status=status)
+
+@app.route('/cluster_api', methods=["POST", ])
+def clusters_api():
+    """
+    Обрабатывает AJAX-запрос от страницы. Возвращает JSON-ответ с результатом
+    выполнения запроса.
+    """
+    action = request.values.get('action')
+    cluster_id = request.values.get('cluster')
+    cluster = Cluster.get(id=cluster_id)
+    if action == 'save':
+        person = request.values.get('person')
+        if person == '':
+            cluster.person = None
+        else:
+            cluster.person = person
+        cluster.save(refresh=True)
+        cluster.update_faces_index()
+        result = {
+            'result': 'ok'
+            # 'value': 'save %s to %s' % (cluster_id, person)
+        }
+    elif action == 'ignore':
+        cluster.person = "ignored, cluster_id: " + cluster.meta.id
+        cluster.save(refresh=True)
+        cluster.update_faces_index()
+        result = {
+            'result': 'ok'
+            # 'value': 'ignore cluster %s' % cluster_id
+        }
+    else:
+        result = {'result': 'error'}
+    return Response(response=json.dumps(result), status=200, mimetype='application/json')
 
 
 @app.route('/', methods=["GET", "POST"])

@@ -33,6 +33,10 @@
       background-color: DodgerBlue;
       color: #fff;
     }
+    input[type=button] {
+      background-color: DodgerBlue;
+      color: #fff;
+    }
     .autocomplete-items {
       position: absolute;
       border: 1px solid #d4d4d4;
@@ -59,7 +63,18 @@
       background-color: DodgerBlue !important;
       color: #ffffff;
     }
+    div.faces {
+      display: block;
+      width: 100%;
+      border: solid 1px grey;
+      padding: 5px;
+      margin-bottom: 5px;
+    }
+    div.faces form {
+      margin-bottom: 5px;
+    }
 	</style>
+  <script type="text/javascript" src="js/jquery-3.3.1.min.js"></script>
 
     <script>
 function autocomplete(inp, arr) {
@@ -177,25 +192,69 @@ var persons = {{persons | safe}};
 
     </div>
     {% for cluster in clusters %}
-    <div> 
+    <div class="faces">
     	<form id="{{cluster.meta.id}}" autocomplete="off" method="post">
             <div class="autocomplete">
                 <input id="name_{{cluster.meta.id}}" name="person" type="text" size="100"/>
             </div>
             <input type="hidden" name="cluster_id" value="{{cluster.meta.id}}"/>
-            <input type="submit" value="Save" name="action" />
-            <input type="submit" value="Ignore" name="action" />
+            <input type="button" value="Save" name="action" />
+            <input type="button" value="Ignore" name="action" />
         </form>
         <script>autocomplete(document.getElementById("name_{{cluster.meta.id}}"), persons);</script>
 
         <div>
 	    {% for face in cluster.faces %}
-		  <img src="\faces\{{face}}.jpg">
+		  <a href="/image/{{face}}"><img src="/faces/{{face}}.jpg"></a>
 		{% endfor %}
     	</div>
 	</div>
-	<hr/>
     {% endfor %}
+  <script>
+    function save_click(e) {
+      // Обработчик щелчка по кнопке Save. Получает объект события.
+      var main_div = $(e.target.parentElement.parentElement);
+      var main_form = $(e.target.parentElement);
+      var person = $('div.autocomplete input[name="person"]', main_form).val();
+      var request = {
+        'action': 'save',
+        'cluster': e.target.parentElement.id,
+        'person': person
+      };
+      // console.log(request);
+      $.post('/cluster_api', request, function(data) {
+        if (data.result == 'ok') {
+          main_div.slideUp('fast');
+        }
+        // console.log(data);
+      });
+      return false;
+    };
+
+    function ignore_click(e) {
+      // Обработчик щелчка по кнопке Ignore. Получает объект события.
+      var main_div = $(e.target.parentElement.parentElement);
+      var request = {
+        'action': 'ignore',
+        'cluster': e.target.parentElement.id
+      };
+      // console.log(request);
+      $.post('/cluster_api', request, function(data) {
+        if (data.result == 'ok') {
+          main_div.slideUp('fast');
+        }
+        //console.log(data);
+      });
+      return false;
+    };
+
+    $(document).ready(function() {
+      // Запускаемся сразу после того, как страница будет загружена.
+      // Расставляем обработчики щелчка по кнопкам Save и Ignore.
+      $('.faces input[value="Save"]').click(function(e) { return save_click(e); });
+      $('.faces input[value="Ignore"]').click(function(e) { return ignore_click(e); });
+    });
+  </script>
   </body>
 
 </html>
