@@ -37,14 +37,16 @@ def test_clusters():
 
     persons = [b.key for b in psr.aggs['persons']]
 
-        s = Cluster.search().exclude("exists", field="person")
-        s.query = FunctionScore(query=s.query, functions=[SF('random_score', weight=100),
-                                                          SF('field_value_factor', field="face_count", weight=1)],
-                                score_mode="avg", boost_mode="replace")
-        results = s[0:50].execute()
+    s = Cluster.search().exclude("exists", field="person")
+    s.query = FunctionScore(query=s.query,
+                            functions=[SF('random_score', weight=100),
+                                       SF('field_value_factor',
+                                          field="face_count", weight=1)],
+                            score_mode="avg", boost_mode="replace")
+    results = s[0:50].execute()
 
-    return render_template('clusters.html', clusters=results,
-                           persons=persons, status=status)
+    return render_template('clusters.html', clusters=results, persons=persons,
+                           status=status)
 
 
 @app.route('/cluster_api', methods=["POST", ])
@@ -54,31 +56,21 @@ def clusters_api():
     выполнения запроса.
     """
     action = request.values.get('action')
-    cluster_id = request.values.get('cluster')
-    cluster = Cluster.get(id=cluster_id)
-    if action == 'save':
-        person = request.values.get('person')
-        if person == '':
-            cluster.person = None
+    if action in ('save', 'ignore'):
+        cluster_id = request.values.get('cluster')
+        cluster = Cluster.get(id=cluster_id)
+        if action == 'save':
+            cluster. = request.values.get('person', None)
         else:
-            cluster.person = person
+            cluster.person = "ignored, cluster_id: " + cluster.meta.id
         cluster.save(refresh=True)
         cluster.update_faces_index()
-        result = {
-            'result': 'ok'
-            # 'value': 'save %s to %s' % (cluster_id, person)
-        }
-    elif action == 'ignore':
-        cluster.person = "ignored, cluster_id: " + cluster.meta.id
-        cluster.save(refresh=True)
-        cluster.update_faces_index()
-        result = {
-            'result': 'ok'
-            # 'value': 'ignore cluster %s' % cluster_id
-        }
+        result = { 'result': 'ok' }
     else:
         result = {'result': 'error'}
-    return Response(response=json.dumps(result), status=200, mimetype='application/json')
+
+    return Response(response=json.dumps(result), status=200,
+                    mimetype='application/json')
 
 
 @app.route('/', methods=["GET", "POST"])

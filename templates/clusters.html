@@ -221,12 +221,10 @@ var persons = {{persons | safe}};
         'cluster': e.target.parentElement.id,
         'person': person
       };
-      // console.log(request);
       $.post('/cluster_api', request, function(data) {
         if (data.result == 'ok') {
           main_div.slideUp('fast');
         }
-        // console.log(data);
       });
       return false;
     };
@@ -238,12 +236,10 @@ var persons = {{persons | safe}};
         'action': 'ignore',
         'cluster': e.target.parentElement.id
       };
-      // console.log(request);
       $.post('/cluster_api', request, function(data) {
         if (data.result == 'ok') {
           main_div.slideUp('fast');
         }
-        //console.log(data);
       });
       return false;
     };
@@ -251,8 +247,11 @@ var persons = {{persons | safe}};
     $(document).ready(function() {
       // Запускаемся сразу после того, как страница будет загружена.
       // Расставляем обработчики щелчка по кнопкам Save и Ignore.
-      $('.faces input[value="Save"]').click(function(e) { return save_click(e); });
-      $('.faces input[value="Ignore"]').click(function(e) { return ignore_click(e); });
+      // TODO: возможно, есть смысл пометить эти кнопки разными классами, чтобы не зависеть от надписей на них (сейчас при переименовании кнопок всё полетит).
+      $('.faces input[value="Save"]')
+        .click(function(e) { return save_click(e); });
+      $('.faces input[value="Ignore"]')
+        .click(function(e) { return ignore_click(e); });
     });
   </script>
   </body>
