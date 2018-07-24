@@ -4,27 +4,6 @@ var page = 1;
 var persons = [];
 
 $(document).ready(function() {
-	let grid = document.querySelector('.grid');
-
-	let msnry = $('.grid').masonry({
-		itemSelector: '.grid-item',
-		fitWidth: true,
-		columnWidth: 400,
-		gutter: 5
-	});
-	
-	imagesLoaded(grid).on('progress', function() {
-		msnry.masonry('layout');
-	});
-
-	grid.addEventListener('click', function(event) {
-		if (!matchesSelector(event.target, '.grid-item')) {
-			return;
-		}
-		event.target.classList.toggle('grid-item_gigante');
-		msnry.masonry('layout');
-	});
-
 	$.post(url, requestData, function(responseData) {
 		inputData(responseData);
 	});
@@ -66,15 +45,31 @@ function inputData(data) {
 		jFacetBlock.append(htmlOutput);
 	}
 
+	var html = [];
 	for (let i = 0; i < photo.length; i++) {
-		jContentBlock.append('<div class="grid-item"><img src="' + photo[i] + '"></div>');
+		html.push('<div class="grid-item"><img src="' + photo[i] + '"></div>');
 	}
+	$('#photoBlock .grid').html(html.join('\n'));
+
+	var $grid = $('.grid').masonry({
+		itemSelector: '.grid-item',
+		fitWidth: true,
+		columnWidth: 400,
+		gutter: 5
+	});
+	$grid.click(function(e) {
+		if ($(e.target).hasClass('grid-item')) {
+			$(e.target).toggleClass('grid-item_gigante');
+			$grid.masonry('layout');
+		}
+	});
+	setTimeout(function() { $grid.masonry('layout'); }, 500);
 
 	$('.person-block input').on('change', function() {
 		if ($(this).is(':checked')) {
 			persons.push($(this).attr('id'));
 		} else {
-			persons.splice( $.inArray($(this).attr('id'), persons) ,1 );
+			persons.splice($.inArray($(this).attr('id'), persons) ,1);
 		}
 		collectData();
 	});
