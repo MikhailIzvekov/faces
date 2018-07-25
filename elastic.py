@@ -17,8 +17,8 @@ class Position(InnerDoc):
 
 
 class Face(DocType):
-    file_name = Text(analyzer=path_analyzer,
-                     fields={'raw': Keyword()})
+    file_name = Text(
+        fields={'raw': Keyword()})
     features = Binary()
 
     position = Object(Position)
