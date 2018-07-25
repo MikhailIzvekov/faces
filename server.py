@@ -15,6 +15,15 @@ def internal_server_error(e):
     return str(e), 500
 
 
+@app.route('/image/<face_id>', methods=["GET", ])
+def display_image(face_id):
+    face = Face().get(face_id)
+    img_src = os.path.splitdrive(face.file_name)[1]
+
+    status = ""
+    return render_template('image.html', img_src=img_src, status=status)
+
+
 @app.route('/clusters', methods=['GET', ])
 def test_clusters():
     """
@@ -79,6 +88,15 @@ def clusters_api():
                     mimetype='application/json')
 
 
+@app.route('/f/<person>', methods=["GET", ])
+def display_faces(person):
+    Face._index.refresh()
+    s = Face.search().filter("term", person__raw=person)
+    status = "{}: {}".format(person, s.count())
+    results = s[0:1000].execute()
+    return render_template('faces.html', faces=results, status=status)
+
+
 @app.route('/', methods=["GET", "POST"])
 def display_main():
     q = request.values.get('q')
@@ -92,7 +110,7 @@ def display_main():
     results = s[0:100].execute()
     images = []
     for photo in results:
-        images.append(os.path.splitdrive(photo.file_name)[1])
+        images.append(r"\thumbnails" + os.path.splitdrive(photo.file_name)[1])
     persons = results.facets.persons
     counts = results.facets.person_count
     tags = results.facets.tags
