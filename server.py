@@ -37,13 +37,17 @@ def test_clusters():
 
     persons = [b.key for b in psr.aggs['persons']]
 
-    s = Cluster.search().exclude("exists", field="person")
-    s.query = FunctionScore(query=s.query,
-                            functions=[SF('random_score', weight=100),
-                                       SF('field_value_factor',
-                                          field="face_count", weight=1)],
-                            score_mode="avg", boost_mode="replace")
-    results = s[0:50].execute()
+    if person:
+        s = Cluster.search().filter("prefix", person=person).sort("-face_count")
+        results = s[0:10000].execute()
+    else:
+        s = Cluster.search().exclude("exists", field="person")
+        s.query = FunctionScore(query=s.query,
+                                functions=[SF('random_score', weight=100),
+                                           SF('field_value_factor',
+                                              field="face_count", weight=1)],
+                                score_mode="avg", boost_mode="replace")
+        results = s[0:50].execute()
 
     return render_template('clusters.html', clusters=results, persons=persons,
                            status=status)
@@ -60,7 +64,9 @@ def clusters_api():
         cluster_id = request.values.get('cluster')
         cluster = Cluster.get(id=cluster_id)
         if action == 'save':
-            cluster. = request.values.get('person', None)
+            cluster.person = request.values.get('person', None)
+            if cluster.person == '':
+                cluster.person = None
         else:
             cluster.person = "ignored, cluster_id: " + cluster.meta.id
         cluster.save(refresh=True)

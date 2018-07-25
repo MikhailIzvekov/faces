@@ -190,6 +190,13 @@ var persons = {{persons | safe}};
     <div class="status">
         {{status}}
 
+    	<form id="filter" autocomplete="off" method="get">
+            <div class="autocomplete">
+                <input id="name_filter" name="filter" type="text" size="100"/>
+            </div>
+            <input type="submit" value="Filter" />
+        </form>
+        <script>autocomplete(document.getElementById("name_filter"), persons);</script>
     </div>
     {% for cluster in clusters %}
     <div class="faces">
