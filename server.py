@@ -95,6 +95,27 @@ def display_main():
                            persons=persons, counts=counts, tags=tags, total_count=results.hits.total)
 
 
+@app.route('/_search', methods=["POST", ])
+def search_api():
+    q = request.values.get('q')
+    page = int(request.values.get('page', 1))
+    pc = {"persons": request.values.getlist("person[]"),
+          "tags": request.values.getlist("tag[]"),
+          "person_count": [int(x) for x in request.values.getlist("person_count[]")]}
+    s = PhotoSearch(query=q, filters=pc)
+    results = s[(page - 1)*50:page*50].execute()
+    result = {
+        "count": results.hits.total,
+        "hits": [r"\thumbnails" + os.path.splitdrive(photo.file_name)[1] for photo in results],
+        "facets": {
+            "person": list(results.facets.persons),
+            "tag": list(results.facets.tags),
+            "person_count": list(results.facets.person_count)
+        }
+    }
+    return Response(response=json.dumps(result), status=200, mimetype='application/json')
+
+
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("-es", "--elastic", dest="elastic",
