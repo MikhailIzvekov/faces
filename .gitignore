@@ -4,3 +4,4 @@ venv/*
 /static/thumbnails/*
 /static/OM
 Thumbs.db
+.idea/
