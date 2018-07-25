@@ -66,12 +66,5 @@ if __name__ == '__main__':
                         help="Elasticsearch address, default is localhost", metavar="ADDRESS", default='localhost')
     args = parser.parse_args()
     connections.create_connection(hosts=[args.elastic])
-
-    shuffle()
-
-    # faces = [face for face in Face.search().scan()]
-    # clst = approximate_rank_order_clustering(faces)
-    # generate_clusters_index(clst)
-
-
-    # generate_images_index()
+    # shuffle()
+    generate_images_index()

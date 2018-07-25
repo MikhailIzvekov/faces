@@ -1,8 +1,5 @@
 from elasticsearch_dsl import DocType, InnerDoc, Integer, Text, Field, Object, Keyword, \
-    analyzer, tokenizer, FacetedSearch, TermsFacet, connections
-
-path_tokenizer = tokenizer('path_tokenizer', type='path_hierarchy', delimiter='\\')
-path_analyzer = analyzer('path_analyzer', tokenizer=path_tokenizer)
+    FacetedSearch, TermsFacet, connections
 
 
 class Binary(Field):
