@@ -1,1 +1,6 @@
-*.bak
+*.pyc
+static/faces/*
+venv/*
+/static/thumbnails/*
+/static/OM
+Thumbs.db
