@@ -51,7 +51,6 @@ function sendRequest(data) {
 
 let jPhotoBlock = $('#photoBlock');
 jPhotoBlock.scroll(function() {
-	console.log(123);
 	if (jPhotoBlock.scrollTop() >= jPhotoBlock[0].scrollHeight - jPhotoBlock.height()) {
 		page++;
 		sendRequest(collectData());
@@ -93,11 +92,10 @@ function inputData(data) {
 
 	var $items = $(html.join('\n'));
 	$('.grid').append( $items )
-			  .masonry( 'appended', $items);
-
-	setTimeout(function() { 
-		$('.grid').masonry('layout');
-	}, 500);
+			  .masonry( 'appended', $items)
+			  .imagesLoaded(function() {
+				$('.grid').masonry('layout');
+			  });
 
 	$('.person-block input').on('change', function() {
 		$('#photoBlock').animate({scrollTop:0}, 500, 'swing');
