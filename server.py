@@ -95,7 +95,7 @@ def search_api():
     results = s[(page - 1)*50:page*50].execute()
     result = {
         "count": results.hits.total,
-        "hits": [r"\thumbnails" + os.path.splitdrive(photo.file_name)[1] for photo in results],
+        "hits": [{ 'path': r"\thumbnails" + os.path.splitdrive(photo.file_name)[1], 'persons': photo.person_count } for photo in results],
         "facets": {
             "person": list(results.facets.persons),
             "tag": list(results.facets.tags),
