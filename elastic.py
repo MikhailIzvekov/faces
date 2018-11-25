@@ -134,6 +134,22 @@ class PhotoSearch(FacetedSearch):
     def query(self, search, query):
         if query:
             return search.query("simple_query_string", fields=self.fields, query=query, default_operator='and')
+		else
+			get_random = {
+				  "query": {
+					"function_score": {
+					  "query": {
+						"match_all": {}
+					  },
+					  "functions": [
+						{
+						  "random_score": {}
+						}
+					  ]
+					}
+				  }
+				}
+			return search.query("match", fields=self.fields, query=get_random, default_operator='and')
         return search
 
     def highlight(self, search):
