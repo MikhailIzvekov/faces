@@ -5,3 +5,4 @@ venv/*
 /static/OM
 Thumbs.db
 .idea/
+/.vs
