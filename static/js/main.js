@@ -86,8 +86,8 @@ function inputData(data) {
 
 	let html = [];
 	for (let i = 0; i < photo.length; i++) {
-		let path = photo[i].replace('\\thumbnails', '');
-		html.push('<div class="grid-item"><img src="' + photo[i] + '"><a class="btn_copy" data-clipboard-text="' + path + '" title="' + path + '">Copy link</a></div>');
+		let path = photo[i].path.replace('\\thumbnails', '');
+        html.push('<div class="grid-item"><img src="' + photo[i].path + '"><a class="btn_copy" data-clipboard-text="' + path + '" title="' + path + '">Copy link</a></div>');
 	}
 
 	var $items = $(html.join('\n'));
