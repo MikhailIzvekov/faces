@@ -108,7 +108,7 @@ def search_api():
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("-es", "--elastic", dest="elastic",
-                        help="Elasticsearch address, default is localhost", metavar="ADDRESS", default='localhost')
+                        help="Elasticsearch address, default is localhost", metavar="ADDRESS", default='vrpbes')
     args = parser.parse_args()
 
     connections.create_connection(hosts=[args.elastic])
