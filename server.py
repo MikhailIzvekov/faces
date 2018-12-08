@@ -88,15 +88,15 @@ def display_main():
 def search_api():
     page_size = 50
 
-	if request.values.get('page'):
-		page = int(request.values.get('page', 1))
-		skip = (page - 1)*page_size
-		take = page*page_size
-	else:
-		skip = int(request.values.get('skip', 0))
-		take = int(request.values.get('take', page_size))
+    if request.values.get('page'):
+        page = int(request.values.get('page', 1))
+        skip = (page - 1)*page_size
+        take = page*page_size
+    else:
+        skip = int(request.values.get('skip', 0))
+        take = int(request.values.get('take', page_size))
 
-	q = request.values.get('q')
+    q = request.values.get('q')
     pc = {"persons": request.values.getlist("person[]"),
           "tags": request.values.getlist("tag[]"),
           "person_count": [int(x) for x in request.values.getlist("person_count[]")]}
