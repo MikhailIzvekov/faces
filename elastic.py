@@ -1,6 +1,7 @@
 from elasticsearch_dsl import DocType, InnerDoc, Integer, Text, Field, Object, Keyword, \
-    FacetedSearch, TermsFacet, connections
-
+    FacetedSearch, TermsFacet, connections, Q, SF
+from elasticsearch_dsl.query import FunctionScore
+import time
 
 class Binary(Field):
     name = 'binary'
@@ -134,7 +135,9 @@ class PhotoSearch(FacetedSearch):
     def query(self, search, query):
         if query:
             return search.query("simple_query_string", fields=self.fields, query=query, default_operator='and')
-        return search
+        else:
+            search.query = FunctionScore(query=Q(), functions=[SF('random_score', seed=int(time.time()))])
+            return search
 
     def highlight(self, search):
         return search
