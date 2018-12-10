@@ -86,13 +86,24 @@ def display_main():
 
 @app.route('/_search', methods=["POST", ])
 def search_api():
+    page_size = 50
+
+    if request.values.get('page'):
+        page = int(request.values.get('page', 1))
+        skip = (page - 1)*page_size
+        take = page*page_size
+    else:
+        skip = int(request.values.get('skip', 0))
+        take = int(request.values.get('take', page_size))
+
     q = request.values.get('q')
-    page = int(request.values.get('page', 1))
     pc = {"persons": request.values.getlist("person[]"),
           "tags": request.values.getlist("tag[]"),
           "person_count": [int(x) for x in request.values.getlist("person_count[]")]}
+
     s = PhotoSearch(query=q, filters=pc)
-    results = s[(page - 1)*50:page*50].execute()
+    results = s[skip:take].execute()
+
     result = {
         "count": results.hits.total,
         "hits": [{ 'path': r"\thumbnails" + os.path.splitdrive(photo.file_name)[1], 'persons': photo.person_count } for photo in results],
