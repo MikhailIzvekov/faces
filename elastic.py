@@ -106,7 +106,7 @@ class Cluster(DocType):
 class PhotoSearch(FacetedSearch):
     index = 'photos'
     doc_types = [Photo, ]
-    fields = ['persons', 'file_name', 'person_count']
+    fields = ['persons', 'file_name']
 
     facets = {
         'persons': TermsFacet(field='persons.raw', size=100),
