@@ -1,5 +1,7 @@
 from elasticsearch_dsl import DocType, InnerDoc, Integer, Text, Field, Object, Keyword, \
-    FacetedSearch, TermsFacet, connections, tokenizer, analyzer
+    FacetedSearch, TermsFacet, connections, Q, SF, tokenizer, analyzer
+from elasticsearch_dsl.query import FunctionScore
+import time
 
 path_tokenizer = tokenizer('path_tokenizer', type='path_hierarchy', delimiter='\\')
 path_analyzer = analyzer('path_analyzer', tokenizer=path_tokenizer)
@@ -140,7 +142,9 @@ class PhotoSearch(FacetedSearch):
     def query(self, search, query):
         if query:
             return search.query("simple_query_string", fields=self.fields, query=query, default_operator='and')
-        return search
+        else:
+            search.query = FunctionScore(query=Q(), functions=[SF('random_score', seed=int(time.time()))])
+            return search
 
     def highlight(self, search):
         return search
