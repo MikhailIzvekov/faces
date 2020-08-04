@@ -29,8 +29,6 @@ def generate_clusters_index(clusters):
 
 
 def generate_images_index():
-    Photo._index.delete(ignore=404)
-    Photo.init()
     results = Face.search().filter("exists", field="person").exclude('terms', person=['ignored']).scan()
 
     groups = defaultdict(list)
@@ -38,6 +36,8 @@ def generate_images_index():
     for face in results:
         groups[face.file_name].append(face.person)
 
+    Photo._index.delete(ignore=404)
+    Photo.init()
     bulk(Elasticsearch(args.elastic), (Photo(group[0], group[1]).to_dict(True) for group in groups.items()))
 
 
