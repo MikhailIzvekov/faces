@@ -1,5 +1,8 @@
 from elasticsearch_dsl import DocType, InnerDoc, Integer, Text, Field, Object, Keyword, \
-    FacetedSearch, TermsFacet, connections
+    FacetedSearch, TermsFacet, connections, tokenizer, analyzer
+
+path_tokenizer = tokenizer('path_tokenizer', type='path_hierarchy', delimiter='\\')
+path_analyzer = analyzer('path_analyzer', tokenizer=path_tokenizer)
 
 
 class Binary(Field):
@@ -15,7 +18,10 @@ class Position(InnerDoc):
 
 class Face(DocType):
     file_name = Text(
-        fields={'raw': Keyword()})
+        fields={
+            'raw': Keyword(),
+            'path': Text(analyzer=path_analyzer)
+        })
     features = Binary()
 
     position = Object(Position)
