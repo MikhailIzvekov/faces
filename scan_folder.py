@@ -9,6 +9,8 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument("-f", "--folder", dest="folder",
                         help="folder to add in scan queue", metavar="FOLDER")
+    parser.add_argument("-i", "--file", dest="file",
+                        help="file to add in scan queue", metavar="FILE")
     parser.add_argument("-host", "--host", dest="host",
                         help="RabbitMQ host, default is localhost", metavar="HOST", default='localhost')
 
@@ -21,7 +23,7 @@ if __name__ == '__main__':
                         help="RabbitMQ user password", metavar="PASSWORD", default='guest')
 
     args = parser.parse_args()
-    if args.folder:
+    if args.folder or args.file:
 
         credentials = PlainCredentials(args.user, args.password)
         connection = pika.BlockingConnection(pika.ConnectionParameters(host=args.host, credentials=credentials))
@@ -29,14 +31,26 @@ if __name__ == '__main__':
 
         channel.queue_declare(queue='img_queue', durable=True)
 
-        for dirpath, dirs, files in os.walk(args.folder):
-            for f in files:
-                if f.lower().endswith(('.jpg', '.jpeg')):
-                    channel.basic_publish(exchange='',
-                                          routing_key='img_queue',
-                                          body=join(dirpath, f),
-                                          properties=pika.BasicProperties(
-                                              delivery_mode=2,  # make message persistent
-                                              headers={'named': args.named}
-                                          ))
+        if args.folder:
+            for dirpath, dirs, files in os.walk(args.folder):
+                for f in files:
+                    if f.lower().endswith(('.jpg', '.jpeg')):
+                        channel.basic_publish(exchange='',
+                                              routing_key='img_queue',
+                                              body=join(dirpath, f),
+                                              properties=pika.BasicProperties(
+                                                  delivery_mode=2,  # make message persistent
+                                                  headers={'named': args.named}
+                                              ))
+
+        if args.file:
+            if args.file.lower().endswith(('.jpg', '.jpeg')):
+                channel.basic_publish(exchange='',
+                                      routing_key='img_queue',
+                                      body=args.file,
+                                      properties=pika.BasicProperties(
+                                          delivery_mode=2,  # make message persistent
+                                          headers={'named': args.named}
+                                      ))
+
         connection.close()
