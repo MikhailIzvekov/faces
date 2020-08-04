@@ -73,7 +73,9 @@ if __name__ == '__main__':
     print(' [*] Waiting for messages. To exit press CTRL+BREAK')
 
     credentials = PlainCredentials(args.user, args.password)
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host=args.host, credentials=credentials))
+    params = pika.ConnectionParameters(host=args.host, credentials=credentials,
+                                       heartbeat=600, blocked_connection_timeout=300)
+    connection = pika.BlockingConnection(params)
     channel = connection.channel()
     channel.queue_declare(queue='img_queue', durable=True)
 
