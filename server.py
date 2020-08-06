@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
+import random
+
 from elasticsearch_dsl.query import FunctionScore
 from flask import Flask, render_template, request, Response, redirect
 from elastic import PhotoSearch, Cluster, Face
@@ -122,9 +124,27 @@ def search_api():
     s = PhotoSearch(query=q, filters=pc)
     results = s[skip:take].execute()
 
+    def photo2dto(photo):
+        thumb = r"\thumbnails" + os.path.splitdrive(photo.file_name)[1]
+        dto = {'thumb': thumb, 'persons': photo.person_count}
+
+        styles = ['_swing', '_circle', '_zoom-in', '_dolly-zoom-in']
+        styles = ['_zoom-in', '_dolly-zoom-in']
+        styles = ['_swing', '_circle']
+        style = random.choice(styles)
+
+        v_thumb = None
+        if photo.thumbnails:
+            random.shuffle(photo.thumbnails)
+            v_thumb = next((x for x in photo.thumbnails if style in x), None)
+            if v_thumb:
+                dto['v_thumb'] = os.path.join(os.path.dirname(thumb), v_thumb)
+
+        return dto
+
     result = {
-        "count": results.hits.total,
-        "hits": [{ 'path': r"\thumbnails" + os.path.splitdrive(photo.file_name)[1], 'persons': photo.person_count } for photo in results],
+        "count": results.hits.total.value,
+        "hits": [photo2dto(photo) for photo in results],
         "facets": {
             "person": list(results.facets.persons),
             "tag": list(results.facets.tags),

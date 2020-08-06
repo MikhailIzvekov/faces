@@ -87,8 +87,23 @@ function inputData(data) {
 
     let html = [];
     for (let i = 0; i < photo.length; i++) {
-        let path = photo[i].path.replace('\\thumbnails', '');
-        html.push('<div class="grid-item"><img src="' + photo[i].path + '"><a class="btn_copy" data-clipboard-text="' + path + '" title="' + path + '">Copy link</a></div>');
+        let path = photo[i].thumb.replace('\\thumbnails', '');
+
+        if (photo[i].hasOwnProperty('v_thumb') && photo[i]['v_thumb'])
+        {
+            html.push(
+                '<div class="grid-item">' +
+                '  <video width="370" style="object-fit: fill;" autoplay muted loop poster="' + photo[i].thumb + '">' +
+                '    <source src="' + photo[i].v_thumb + '" type="video/mp4">' +
+                '  </video>' +
+                '  <img src="' + photo[i].thumb + '" style="display: none">' +
+                '  <a class="btn_copy" data-clipboard-text="' + path + '" title="' + path + '">Copy link</a>' +
+                '</div>');
+        }
+        else
+        {
+            html.push('<div class="grid-item"><img src="' + photo[i].thumb + '"><a class="btn_copy" data-clipboard-text="' + path + '" title="' + path + '">Copy link</a></div>');
+        }
     }
 
     var $items = $(html.join('\n'));
