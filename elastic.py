@@ -14,11 +14,18 @@ class Binary(Field):
     name = 'binary'
 
 
-class Position(InnerDoc):
+class PositionTLBR(InnerDoc):
     top = Integer()
     left = Integer()
     bottom = Integer()
     right = Integer()
+
+
+class PositionXYWH(InnerDoc):
+    x = float()
+    y = float()
+    w = float()
+    h = float()
 
 
 class Face(Document):
@@ -30,13 +37,28 @@ class Face(Document):
         })
     features = Binary()
 
-    position = Object(Position)
+    position = Object(PositionTLBR)
     person = Text(
         fields={'raw': Keyword()}
     )
 
     class Index:
         name = 'faces'
+
+
+class DetectedObject(Document):
+    file_name = Text(
+        analyzer=text_analyzer,
+        fields={
+            'raw': Keyword(),
+            'path': Text(analyzer=path_analyzer)
+        })
+
+    position = Object(PositionXYWH)
+    type = Keyword()
+
+    class Index:
+        name = 'detected_objects'
 
 
 class Photo(Document):
@@ -54,6 +76,10 @@ class Photo(Document):
     )
 
     person_count = Integer()
+
+    thumbnails = Keyword()
+
+    objects = Keyword()
 
     class Index:
         name = 'photos'
