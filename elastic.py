@@ -1,10 +1,13 @@
-from elasticsearch_dsl import DocType, InnerDoc, Integer, Text, Field, Object, Keyword, \
-    FacetedSearch, TermsFacet, connections, Q, SF, tokenizer, analyzer
+from elasticsearch_dsl import Document, InnerDoc, Integer, Text, Field, Object, Keyword, \
+    FacetedSearch, TermsFacet, connections, Q, SF, tokenizer, analyzer, token_filter
 from elasticsearch_dsl.query import FunctionScore
 import time
 
 path_tokenizer = tokenizer('path_tokenizer', type='path_hierarchy', delimiter='\\')
 path_analyzer = analyzer('path_analyzer', tokenizer=path_tokenizer)
+
+word_delimiter = token_filter('word_delimiter', type='word_delimiter', catenate_all=True, preserve_original=True)
+text_analyzer = analyzer('text_analyzer', filter=[word_delimiter, "lowercase"], tokenizer="standard")
 
 
 class Binary(Field):
@@ -18,8 +21,9 @@ class Position(InnerDoc):
     right = Integer()
 
 
-class Face(DocType):
+class Face(Document):
     file_name = Text(
+        analyzer=text_analyzer,
         fields={
             'raw': Keyword(),
             'path': Text(analyzer=path_analyzer)
@@ -35,10 +39,14 @@ class Face(DocType):
         name = 'faces'
 
 
-class Photo(DocType):
+class Photo(Document):
     file_name = Text(
+        analyzer=text_analyzer,
         fielddata=True,
-        fields={'raw': Keyword()}
+        fields={
+            'raw': Keyword(),
+            'path': Text(analyzer=path_analyzer)
+        }
     )
 
     persons = Text(
@@ -58,7 +66,7 @@ class Photo(DocType):
             self.person_count = len(persons)
 
 
-class Cluster(DocType):
+class Cluster(Document):
     faces = Keyword()
     face_count = Integer()
     person = Keyword()
