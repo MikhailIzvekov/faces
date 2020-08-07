@@ -9,6 +9,7 @@ from elasticsearch_dsl import connections, Search, A, Q, SF
 from argparse import ArgumentParser
 import json
 
+connections.create_connection(hosts=["smartlearning"])
 app = Flask(__name__, static_url_path='')
 
 
@@ -130,7 +131,7 @@ def search_api():
 
         styles = ['_swing', '_circle', '_zoom-in', '_dolly-zoom-in']
         styles = ['_zoom-in', '_dolly-zoom-in']
-        styles = ['_swing', '_circle']
+        # styles = ['_swing', '_circle']
         style = random.choice(styles)
 
         v_thumb = None
@@ -157,7 +158,7 @@ def search_api():
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("-es", "--elastic", dest="elastic",
-                        help="Elasticsearch address, default is localhost", metavar="ADDRESS", default='localhost')
+                        help="Elasticsearch address, default is localhost", metavar="ADDRESS", default='smartlearning')
     args = parser.parse_args()
 
     connections.create_connection(hosts=[args.elastic])

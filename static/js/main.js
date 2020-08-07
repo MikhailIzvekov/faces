@@ -88,6 +88,7 @@ function inputData(data) {
     let html = [];
     for (let i = 0; i < photo.length; i++) {
         let path = photo[i].thumb.replace('\\thumbnails', '');
+        path = '\\\\comp.npo\\data' + path;
 
         if (photo[i].hasOwnProperty('v_thumb') && photo[i]['v_thumb'])
         {
@@ -97,12 +98,12 @@ function inputData(data) {
                 '    <source src="' + photo[i].v_thumb + '" type="video/mp4">' +
                 '  </video>' +
                 '  <img src="' + photo[i].thumb + '" style="display: none">' +
-                '  <a class="btn_copy" data-clipboard-text="' + path + '" title="' + path + '">Copy link</a>' +
+                '  <a class="btn_copy" data-clipboard-text="' + path + '" title="' + path + '">копировать ссылку</a>' +
                 '</div>');
         }
         else
         {
-            html.push('<div class="grid-item"><img src="' + photo[i].thumb + '"><a class="btn_copy" data-clipboard-text="' + path + '" title="' + path + '">Copy link</a></div>');
+            html.push('<div class="grid-item"><img src="' + photo[i].thumb + '"><a class="btn_copy" data-clipboard-text="' + path + '" title="' + path + '">копировать ссылку</a></div>');
         }
     }
 
