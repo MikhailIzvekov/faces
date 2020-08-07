@@ -134,7 +134,7 @@ def search_api():
         style = random.choice(styles)
 
         v_thumb = None
-        if photo.thumbnails:
+        if photo.thumbnails and not isinstance(photo.thumbnails, str):
             random.shuffle(photo.thumbnails)
             v_thumb = next((x for x in photo.thumbnails if style in x), None)
             if v_thumb:

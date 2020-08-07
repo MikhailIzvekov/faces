@@ -93,7 +93,7 @@ function inputData(data) {
         {
             html.push(
                 '<div class="grid-item">' +
-                '  <video width="370" style="object-fit: fill;" autoplay muted loop poster="' + photo[i].thumb + '">' +
+                '  <video style="object-fit: fill;" autoplay muted loop poster="' + photo[i].thumb + '">' +
                 '    <source src="' + photo[i].v_thumb + '" type="video/mp4">' +
                 '  </video>' +
                 '  <img src="' + photo[i].thumb + '" style="display: none">' +
