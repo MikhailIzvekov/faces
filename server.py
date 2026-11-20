@@ -153,6 +153,25 @@ def search_api():
     }
     return Response(response=json.dumps(result), status=200, mimetype='application/json')
 
+@app.route('/whoin', methods=["POST", ])
+def photo_api():
+    path = request.values.get('path')
+    
+    es = connections.get_connection()
+	
+    results = es.search(index = "faces",
+        body={
+            "query": {
+                "term" : { "file_name.raw" : path } 
+            }
+        })['hits']
+	
+    result = {
+        "count": results['total'],
+        "hits": [{ "person": item["_source"]["person"], "position": item["_source"]["position"]} for item in results['hits']],
+    }
+	
+    return Response(response=json.dumps(result), status=200, mimetype='application/json')
 
 if __name__ == "__main__":
     parser = ArgumentParser()
