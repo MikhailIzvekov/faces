@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
+import random
+
 from elasticsearch_dsl.query import FunctionScore
 from flask import Flask, render_template, request, Response, redirect
 from elastic import PhotoSearch, Cluster, Face
@@ -13,6 +15,15 @@ app = Flask(__name__, static_url_path='')
 @app.errorhandler(500)
 def internal_server_error(e):
     return str(e), 500
+
+
+@app.route('/image/<face_id>', methods=["GET", ])
+def display_image(face_id):
+    face = Face().get(face_id)
+    img_src = os.path.splitdrive(face.file_name)[1]
+
+    status = ""
+    return render_template('image.html', img_src=img_src, status=status)
 
 
 @app.route('/clusters', methods=['GET', ])
@@ -79,6 +90,15 @@ def clusters_api():
                     mimetype='application/json')
 
 
+@app.route('/f/<person>', methods=["GET", ])
+def display_faces(person):
+    Face._index.refresh()
+    s = Face.search().filter("term", person__raw=person)
+    status = "{}: {}".format(person, s.count())
+    results = s[0:1000].execute()
+    return render_template('faces.html', faces=results, status=status)
+
+
 @app.route('/', methods=["GET", "POST"])
 def display_main():
     return redirect("/index.html", code=301)
@@ -86,16 +106,45 @@ def display_main():
 
 @app.route('/_search', methods=["POST", ])
 def search_api():
+    page_size = 50
+
+    if request.values.get('page'):
+        page = int(request.values.get('page', 1))
+        skip = (page - 1)*page_size
+        take = page*page_size
+    else:
+        skip = int(request.values.get('skip', 0))
+        take = int(request.values.get('take', page_size))
+
     q = request.values.get('q')
-    page = int(request.values.get('page', 1))
     pc = {"persons": request.values.getlist("person[]"),
           "tags": request.values.getlist("tag[]"),
           "person_count": [int(x) for x in request.values.getlist("person_count[]")]}
+
     s = PhotoSearch(query=q, filters=pc)
-    results = s[(page - 1)*50:page*50].execute()
+    results = s[skip:take].execute()
+
+    def photo2dto(photo):
+        thumb = r"\thumbnails" + os.path.splitdrive(photo.file_name)[1]
+        dto = {'thumb': thumb, 'persons': photo.person_count}
+
+        styles = ['_swing', '_circle', '_zoom-in', '_dolly-zoom-in']
+        styles = ['_zoom-in', '_dolly-zoom-in']
+        styles = ['_swing', '_circle']
+        style = random.choice(styles)
+
+        v_thumb = None
+        if photo.thumbnails and not isinstance(photo.thumbnails, str):
+            random.shuffle(photo.thumbnails)
+            v_thumb = next((x for x in photo.thumbnails if style in x), None)
+            if v_thumb:
+                dto['v_thumb'] = os.path.join(os.path.dirname(thumb), v_thumb)
+
+        return dto
+
     result = {
-        "count": results.hits.total,
-        "hits": [r"\thumbnails" + os.path.splitdrive(photo.file_name)[1] for photo in results],
+        "count": results.hits.total.value,
+        "hits": [photo2dto(photo) for photo in results],
         "facets": {
             "person": list(results.facets.persons),
             "tag": list(results.facets.tags),

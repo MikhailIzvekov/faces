@@ -1,24 +1,43 @@
-from elasticsearch_dsl import DocType, InnerDoc, Integer, Text, Field, Object, Keyword, \
-    FacetedSearch, TermsFacet, connections
+from elasticsearch_dsl import Document, InnerDoc, Integer, Text, Field, Object, Keyword, \
+    FacetedSearch, TermsFacet, connections, Q, SF, tokenizer, analyzer, token_filter
+from elasticsearch_dsl.query import FunctionScore
+import time
+
+path_tokenizer = tokenizer('path_tokenizer', type='path_hierarchy', delimiter='\\')
+path_analyzer = analyzer('path_analyzer', tokenizer=path_tokenizer)
+
+word_delimiter = token_filter('word_delimiter', type='word_delimiter', catenate_all=True, preserve_original=True)
+text_analyzer = analyzer('text_analyzer', filter=[word_delimiter, "lowercase"], tokenizer="standard")
 
 
 class Binary(Field):
     name = 'binary'
 
 
-class Position(InnerDoc):
+class PositionTLBR(InnerDoc):
     top = Integer()
     left = Integer()
     bottom = Integer()
     right = Integer()
 
 
-class Face(DocType):
+class PositionXYWH(InnerDoc):
+    x = float()
+    y = float()
+    w = float()
+    h = float()
+
+
+class Face(Document):
     file_name = Text(
-        fields={'raw': Keyword()})
+        analyzer=text_analyzer,
+        fields={
+            'raw': Keyword(),
+            'path': Text(analyzer=path_analyzer)
+        })
     features = Binary()
 
-    position = Object(Position)
+    position = Object(PositionTLBR)
     person = Text(
         fields={'raw': Keyword()}
     )
@@ -27,10 +46,29 @@ class Face(DocType):
         name = 'faces'
 
 
-class Photo(DocType):
+class DetectedObject(Document):
     file_name = Text(
+        analyzer=text_analyzer,
+        fields={
+            'raw': Keyword(),
+            'path': Text(analyzer=path_analyzer)
+        })
+
+    position = Object(PositionXYWH)
+    type = Keyword()
+
+    class Index:
+        name = 'detected_objects'
+
+
+class Photo(Document):
+    file_name = Text(
+        analyzer=text_analyzer,
         fielddata=True,
-        fields={'raw': Keyword()}
+        fields={
+            'raw': Keyword(),
+            'path': Text(analyzer=path_analyzer)
+        }
     )
 
     persons = Text(
@@ -38,6 +76,10 @@ class Photo(DocType):
     )
 
     person_count = Integer()
+
+    thumbnails = Keyword()
+
+    objects = Keyword()
 
     class Index:
         name = 'photos'
@@ -50,7 +92,7 @@ class Photo(DocType):
             self.person_count = len(persons)
 
 
-class Cluster(DocType):
+class Cluster(Document):
     faces = Keyword()
     face_count = Integer()
     person = Keyword()
@@ -134,7 +176,9 @@ class PhotoSearch(FacetedSearch):
     def query(self, search, query):
         if query:
             return search.query("simple_query_string", fields=self.fields, query=query, default_operator='and')
-        return search
+        else:
+            search.query = FunctionScore(query=Q(), functions=[SF('random_score', seed=int(time.time()))])
+            return search
 
     def highlight(self, search):
         return search

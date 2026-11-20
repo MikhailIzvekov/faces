@@ -6,3 +6,4 @@ venv/*
 Thumbs.db
 .idea/
 /.vs
+issues/*
